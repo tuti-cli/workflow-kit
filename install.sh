@@ -1,12 +1,15 @@
 #!/bin/bash
 #
-# workflow-kit Installer
-# Installs the workflow system into any project
+# workflow-kit Installer/Updater
+# Installs or updates the workflow system in any project
 #
 # Usage:
-#   ./install.sh                    # Install in current directory
-#   ./install.sh /path/to/project   # Install in specific project
+#   curl -sL https://raw.githubusercontent.com/tuti-cli/workflow-kit/master/install.sh | bash
+#   ./install.sh                    # Install/Update in current directory
+#   ./install.sh /path/to/project   # Install/Update in specific project
 #   ./install.sh --version 1.0.0    # Install specific version
+#   ./install.sh --check            # Check for updates only
+#   ./install.sh --force            # Force update, discard local overrides
 #
 
 set -e
@@ -21,6 +24,8 @@ NC='\033[0m' # No Color
 # Default values
 WORKFLOW_KIT_VERSION="${WORKFLOW_KIT_VERSION:-latest}"
 PROJECT_ROOT="${1:-$(pwd)}"
+CHECK_ONLY=false
+FORCE_UPDATE=false
 GITHUB_REPO="tuti-cli/workflow-kit"
 
 # Parse arguments
@@ -30,17 +35,38 @@ while [[ $# -gt 0 ]]; do
             WORKFLOW_KIT_VERSION="$2"
             shift 2
             ;;
+        --check|-c)
+            CHECK_ONLY=true
+            shift
+            ;;
+        --force|-f)
+            FORCE_UPDATE=true
+            shift
+            ;;
         --help|-h)
-            echo "Usage: $0 [PROJECT_ROOT] [--version VERSION]"
+            echo "Usage: $0 [PROJECT_ROOT] [OPTIONS]"
             echo ""
             echo "Arguments:"
             echo "  PROJECT_ROOT    Path to project directory (default: current directory)"
-            echo "  --version, -v   Specific version to install (default: latest)"
             echo ""
-            echo "Example:"
-            echo "  $0                              # Install in current directory"
-            echo "  $0 /path/to/project             # Install in specific project"
-            echo "  $0 --version 1.0.0              # Install version 1.0.0"
+            echo "Options:"
+            echo "  --version, -v   Specific version to install (default: latest)"
+            echo "  --check, -c     Check for updates without applying"
+            echo "  --force, -f     Discard local overrides, use base versions"
+            echo "  --help, -h      Show this help message"
+            echo ""
+            echo "Examples:"
+            echo "  # Install or update in current directory"
+            echo "  curl -sL https://raw.githubusercontent.com/tuti-cli/workflow-kit/master/install.sh | bash"
+            echo ""
+            echo "  # Install in specific project"
+            echo "  ./install.sh /path/to/project"
+            echo ""
+            echo "  # Install specific version"
+            echo "  ./install.sh --version 1.0.0"
+            echo ""
+            echo "  # Check for updates"
+            echo "  ./install.sh --check"
             exit 0
             ;;
         *)
@@ -77,6 +103,19 @@ check_requirements() {
     fi
 
     log_success "Requirements met"
+}
+
+# Check if workflow-kit is already installed
+check_installed() {
+    local version_file="$PROJECT_ROOT/.workflow/.base-version"
+
+    if [ -f "$version_file" ]; then
+        IS_UPDATE=true
+        CURRENT_VERSION=$(grep -o '"version": *"[^"]*"' "$version_file" | cut -d'"' -f4)
+        log_info "Existing installation found: v$CURRENT_VERSION"
+    else
+        IS_UPDATE=false
+    fi
 }
 
 # Read GitHub config from CLAUDE.md
@@ -131,6 +170,30 @@ get_latest_version() {
     log_success "Latest version: v$LATEST_VERSION"
 }
 
+# Compare versions for update check
+compare_versions() {
+    if [ "$IS_UPDATE" = true ] && [ "$CURRENT_VERSION" = "$LATEST_VERSION" ]; then
+        echo ""
+        log_success "Already up to date! (v$CURRENT_VERSION)"
+        exit 0
+    fi
+
+    if [ "$IS_UPDATE" = true ]; then
+        echo ""
+        log_info "Update available: v$CURRENT_VERSION → v$LATEST_VERSION"
+    fi
+}
+
+# Check for updates only (no apply)
+check_updates_only() {
+    if [ "$CHECK_ONLY" = true ]; then
+        echo ""
+        echo "Run the installer again to apply this update:"
+        echo "  curl -sL https://raw.githubusercontent.com/tuti-cli/workflow-kit/master/install.sh | bash"
+        exit 0
+    fi
+}
+
 # Download workflow-kit
 download_kit() {
     local version="${1:-$LATEST_VERSION}"
@@ -183,7 +246,7 @@ replace_template_vars() {
     fi
 }
 
-# Install agents
+# Install agents (fresh install)
 install_agents() {
     log_info "Installing agents..."
 
@@ -200,6 +263,58 @@ install_agents() {
     done
 
     log_success "Installed $agent_count agents"
+}
+
+# Update agents (preserve overrides)
+update_agents() {
+    log_info "Updating agents..."
+
+    local updated_count=0
+    local preserved_count=0
+
+    # Create backup directory for new base versions
+    mkdir -p "$PROJECT_ROOT/.claude/base"
+
+    for agent in "$TEMP_DIR/kit/.claude/agents/"*.md; do
+        if [ -f "$agent" ]; then
+            local agent_name=$(basename "$agent")
+            local dest="$PROJECT_ROOT/.claude/agents/$agent_name"
+
+            # Replace template variables in content
+            local content=$(cat "$agent")
+            if [ -n "$GITHUB_OWNER" ]; then
+                content=$(echo "$content" | sed "s/{{GITHUB_OWNER}}/$GITHUB_OWNER/g")
+            fi
+            if [ -n "$GITHUB_REPO_NAME" ]; then
+                content=$(echo "$content" | sed "s/{{GITHUB_REPO}}/$GITHUB_REPO_NAME/g")
+            fi
+
+            if [ -f "$dest" ]; then
+                if [ "$FORCE_UPDATE" = true ]; then
+                    echo "$content" > "$dest"
+                    updated_count=$((updated_count + 1))
+                elif diff -q <(echo "$content") "$dest" > /dev/null 2>&1; then
+                    # Files identical, safe to update
+                    echo "$content" > "$dest"
+                    updated_count=$((updated_count + 1))
+                else
+                    # Override detected, preserve and save new base
+                    echo "$content" > "$PROJECT_ROOT/.claude/base/$agent_name"
+                    preserved_count=$((preserved_count + 1))
+                    log_warning "Override preserved: .claude/agents/$agent_name"
+                fi
+            else
+                # New file
+                echo "$content" > "$dest"
+                updated_count=$((updated_count + 1))
+            fi
+        fi
+    done
+
+    log_success "Updated $updated_count agents"
+    if [ $preserved_count -gt 0 ]; then
+        log_warning "Preserved $preserved_count overrides (new base saved to .claude/base/)"
+    fi
 }
 
 # Install commands
@@ -264,7 +379,7 @@ install_workflow_templates() {
     log_success "Workflow templates installed"
 }
 
-# Write version file
+# Write version file (fresh install)
 write_version_file() {
     local version="${1:-$LATEST_VERSION}"
 
@@ -281,6 +396,22 @@ EOF
     log_success "Version file created"
 }
 
+# Update version file
+update_version_file() {
+    local version="${1:-$LATEST_VERSION}"
+
+    cat > "$PROJECT_ROOT/.workflow/.base-version" << EOF
+{
+    "version": "$version",
+    "updated_at": "$(date -Iseconds)",
+    "previous_version": "$CURRENT_VERSION",
+    "source": "tuti-cli/workflow-kit"
+}
+EOF
+
+    log_success "Version updated to v$version"
+}
+
 # Cleanup
 cleanup() {
     if [ -n "$TEMP_DIR" ] && [ -d "$TEMP_DIR" ]; then
@@ -288,8 +419,8 @@ cleanup() {
     fi
 }
 
-# Print summary
-print_summary() {
+# Print install summary
+print_install_summary() {
     echo ""
     echo -e "${GREEN}════════════════════════════════════════${NC}"
     echo -e "${GREEN}  workflow-kit Installation Complete!   ${NC}"
@@ -315,7 +446,25 @@ print_summary() {
     echo "  2. Run /agents:search <query> to find additional agents"
     echo "  3. Run /agents:install <name> to install recommended agents"
     echo ""
-    echo "Update with: /workflow:update"
+    echo "Update with: curl -sL https://raw.githubusercontent.com/tuti-cli/workflow-kit/master/install.sh | bash"
+    echo "Check status with: /workflow:status"
+}
+
+# Print update summary
+print_update_summary() {
+    echo ""
+    echo -e "${GREEN}════════════════════════════════════════${NC}"
+    echo -e "${GREEN}     workflow-kit Updated!              ${NC}"
+    echo -e "${GREEN}════════════════════════════════════════${NC}"
+    echo ""
+    echo "Previous: v$CURRENT_VERSION"
+    echo "Current:  v${LATEST_VERSION:-$WORKFLOW_KIT_VERSION}"
+    echo ""
+
+    if [ "$FORCE_UPDATE" = true ]; then
+        echo -e "${YELLOW}Force update: local overrides were discarded${NC}"
+    fi
+
     echo "Check status with: /workflow:status"
 }
 
@@ -330,6 +479,7 @@ main() {
     trap cleanup EXIT
 
     check_requirements
+    check_installed
     read_github_config
 
     if [ "$WORKFLOW_KIT_VERSION" = "latest" ]; then
@@ -337,15 +487,32 @@ main() {
         WORKFLOW_KIT_VERSION="$LATEST_VERSION"
     fi
 
-    download_kit "$WORKFLOW_KIT_VERSION"
-    create_directories
-    install_agents
-    install_commands
-    install_skills
-    install_workflow_templates
-    write_version_file "$WORKFLOW_KIT_VERSION"
+    # If update mode, check versions
+    if [ "$IS_UPDATE" = true ]; then
+        compare_versions
+        check_updates_only
+    fi
 
-    print_summary
+    download_kit "$WORKFLOW_KIT_VERSION"
+
+    if [ "$IS_UPDATE" = true ]; then
+        # Update mode - preserve overrides
+        update_agents
+        install_commands
+        install_skills
+        install_workflow_templates
+        update_version_file "$WORKFLOW_KIT_VERSION"
+        print_update_summary
+    else
+        # Fresh install mode
+        create_directories
+        install_agents
+        install_commands
+        install_skills
+        install_workflow_templates
+        write_version_file "$WORKFLOW_KIT_VERSION"
+        print_install_summary
+    fi
 }
 
 main

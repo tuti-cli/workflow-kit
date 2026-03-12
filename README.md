@@ -2,18 +2,35 @@
 
 > A portable AI development workflow system for Claude Code. Install in any project and get issue-to-PR pipeline automation with quality gates.
 
-## Quick Start
+## Installation
 
 ```bash
-# In your project directory
-/workflow:init
+curl -sL https://raw.githubusercontent.com/tuti-cli/workflow-kit/master/install.sh | bash
 ```
 
-This will:
+Or specify a project directory:
+
+```bash
+curl -sL https://raw.githubusercontent.com/tuti-cli/workflow-kit/master/install.sh | bash -s -- /path/to/project
+```
+
+That's it. The installer will:
 1. Create `.claude/` structure with core agents, commands, and skills
 2. Create `.workflow/` structure for tracking
 3. Configure GitHub integration from your `CLAUDE.md`
 4. Set up version tracking for future updates
+
+## Update
+
+Run the same command again - it will detect the existing installation and update:
+
+```bash
+curl -sL https://raw.githubusercontent.com/tuti-cli/workflow-kit/master/install.sh | bash
+```
+
+Options:
+- `--check` - Check for updates without applying
+- `--force` - Discard local overrides, use base versions
 
 ## What's Included
 
@@ -63,46 +80,6 @@ Your project's `CLAUDE.md` must have a GitHub Repository section:
 ```
 
 This is used to configure agents with the correct repository.
-
-## Installation
-
-### Method 1: Using /workflow:init (Recommended)
-
-```bash
-/workflow:init
-```
-
-### Method 2: Manual Installation
-
-```bash
-# Download latest release
-curl -sL https://github.com/tuti-cli/workflow-kit/releases/latest/download/workflow-kit.tar.gz | tar xz
-
-# Run install script
-./install.sh /path/to/your/project
-```
-
-## Updates
-
-```bash
-/workflow:update
-```
-
-Updates preserve your local overrides. If you've modified an agent, the new base version is saved to `.claude/base/` for reference.
-
-## Project-Specific Agents
-
-After initialization, install additional agents based on your project:
-
-```bash
-# Discover what agents you need
-/workflow:discover
-
-# Install recommended agents
-/agents:install php-pro
-/agents:install laravel-specialist
-/agents:install code-reviewer
-```
 
 ## Directory Structure
 
