@@ -1,0 +1,56 @@
+name: ✨ Feature Request
+description: New feature or improvement
+labels: ["type: feature", "status: ready"]
+body:
+  - type: input
+    id: summary
+    attributes:
+      label: What do you want to build?
+      placeholder: One-line summary
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Problem it solves
+      placeholder: What user pain or business need does this address?
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      placeholder: How should it work? Include flows, edge cases.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - [ ] User can...
+        - [ ] System should...
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Technical notes
+      placeholder: Stack details, constraints, related issues, affected files
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - "priority: low"
+        - "priority: medium"
+        - "priority: high"
+        - "priority: critical"
+      default: 1
+    validations:
+      required: true

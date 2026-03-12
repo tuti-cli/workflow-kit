@@ -1,27 +1,15 @@
 # agents:remove
 
-> Remove an installed agent from local or global directory.
+> Remove an installed agent.
 
 **Usage:**
-- `/agents:remove <name>` — Remove agent (searches local first, then global)
-- `/agents:remove <name> --local` — Remove from .claude/agents/ only
-- `/agents:remove <name> --global` — Remove from ~/.claude/agents/ only
+- `/agents:remove <n>` — Remove (searches local first, then global)
+- `/agents:remove <n> --local` — Local only
+- `/agents:remove <n> --global` — Global only
+- `/agents:remove <n> --force` — Remove even if protected
 
-**When to use:**
-- Removing unused agents
-- Cleaning up after project completion
-- Replacing with different agent
-
-**Related commands:**
-- `/agents:list` — See installed agents first
-- `/agents:install` — Install replacement agent
-- `/agents:search` — Find alternatives
-
-**Examples:**
-- `/agents:remove wordpress-master` — Remove WordPress agent
-- `/agents:remove python-pro --global` — Remove global Python agent
-
-**Protection:** Protected agents cannot be removed without --force flag.
+**Protected agents (require --force):**
+master-orchestrator, issue-executor, issue-creator, issue-closer, agent-installer, workflow-orchestrator
 
 Invoke `agent-installer`:
-> "Remove agent '$ARGUMENTS' from installed agents. Check for --local or --global flag. Search for agent file in appropriate directory. IF agent is in protected list (master-orchestrator, issue-executor, issue-creator, issue-closer, agent-installer): require --force flag to remove. ELSE: delete the agent file. Confirm removal and report success. List remaining agents in same category if applicable."
+> "Remove agent '$ARGUMENTS'. Check --local/--global/--force flags. Search for agent file in specified directory (default: local first, then global). IF agent is protected and no --force: refuse, explain why it's protected. ELSE: delete the file and confirm removal. List remaining agents in same category if applicable."

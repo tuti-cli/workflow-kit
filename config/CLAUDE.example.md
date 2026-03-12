@@ -1,10 +1,8 @@
 # CLAUDE.md Example
 
-This is an example of the GitHub Repository section that workflow-kit needs in your project's CLAUDE.md file.
+This is the required structure for your project's `CLAUDE.md` for workflow-kit to work correctly.
 
 ## Required Section
-
-Add this to your project's `CLAUDE.md`:
 
 ```markdown
 ### GitHub Repository
@@ -16,6 +14,28 @@ Add this to your project's `CLAUDE.md`:
 - **GitHub MCP:** Always use `owner="your-org" repo="your-repo"`
 ```
 
+The installer reads `Owner` and `Repo` to replace `{{GITHUB_OWNER}}` and `{{GITHUB_REPO}}` in all agents, commands, and skills.
+
+## Stack Detection (automatic)
+
+The installer auto-detects your stack and sets quality gate commands. If detection is wrong, add this section to override:
+
+```markdown
+### Quality Gates
+
+- **Lint:** composer lint
+- **Test:** composer test
+```
+
+Supported auto-detection:
+- **Laravel / Laravel Zero** → `composer lint` + `composer test`
+- **WordPress** → `composer lint` + `composer test`
+- **React** → `npm run lint` + `npm test`
+- **Vue** → `npm run lint` + `npm test`
+- **Node** → `npm run lint` + `npm test`
+- **Python** → `ruff check .` + `pytest`
+- **Generic** → prompts you to configure manually
+
 ## Full Example
 
 ```markdown
@@ -25,9 +45,10 @@ Add this to your project's `CLAUDE.md`:
 Brief description of your project.
 
 ## Tech Stack
-- Language: PHP 8.4 / TypeScript / Python / etc.
-- Framework: Laravel / Next.js / Django / etc.
-- Testing: Pest / Jest / pytest / etc.
+- **Language:** PHP 8.4
+- **Framework:** Laravel Zero 12.x
+- **Testing:** Pest
+- **Linting:** Laravel Pint
 
 ### GitHub Repository
 
@@ -39,35 +60,18 @@ Brief description of your project.
 
 ## Development Commands
 
-### Testing
 ```bash
-composer test          # Run all tests
-composer test:unit     # Unit tests only
-composer lint          # Fix code style
-```
-
-### Building
-```bash
-npm run build          # Production build
-npm run dev            # Development server
+composer test       # All checks: rector + pint + phpstan + pest
+composer lint       # Fix formatting (Pint)
+composer refactor   # Fix code (Rector)
 ```
 
 ## Code Conventions
-- Use strict types
+- strict_types=1 in every file
 - Final classes preferred
 - Constructor injection only
 - PSR-12 formatting
+
+## Project-Specific Notes
+<!-- Add env setup, key directories, deployment info, gotchas here -->
 ```
-
-## How It Works
-
-When you run `/workflow:init`:
-
-1. workflow-kit reads your `CLAUDE.md`
-2. Extracts the `Owner` and `Repo` values from the GitHub Repository section
-3. Replaces `{{GITHUB_OWNER}}` and `{{GITHUB_REPO}}` template variables in agents
-4. Agents are configured for your specific repository
-
-## Multiple Repositories
-
-If you work with multiple repositories, each project should have its own `CLAUDE.md` with the correct GitHub configuration. workflow-kit is installed per-project.

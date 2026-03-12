@@ -1,0 +1,29 @@
+name: 📚 Documentation
+description: Missing, wrong, or outdated docs
+labels: ["type: docs", "status: ready"]
+body:
+  - type: input
+    id: summary
+    attributes:
+      label: What docs need work?
+      placeholder: Page, section, or topic
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: What's wrong or missing?
+      placeholder: Describe what needs to be added, fixed, or improved
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - "priority: low"
+        - "priority: medium"
+        - "priority: high"
+      default: 0

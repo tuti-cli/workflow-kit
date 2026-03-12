@@ -1,52 +1,34 @@
 # workflow:status
 
-> Show workflow-kit status and configuration.
+> Show workflow-kit version, configuration, and project state.
 
 **Usage:**
-- `/workflow:status` — Show full status
+- `/workflow:status` — Full status dashboard
 
 **Output:**
 ```
 workflow-kit Status
 ═══════════════════
 
-Installed Version: v1.0.0
-Latest Available:  v1.1.0
-Update Available:  Yes
+Version:  v1.0.0 (latest: v1.1.0 — update available)
+Stack:    laravel
+GitHub:   myorg/myrepo
 
-GitHub Configuration:
-  Owner: myorg
-  Repo:  myproject
-  Full:  myorg/myproject
+Quality Gates:
+  Lint:   composer lint
+  Test:   composer test
 
-Installed Components:
-  Agents:  6 core
-  Commands: 11 (7 workflow + 4 agents)
-  Skills:   2 (workflow-rules, issue-template)
+Agents:   6 core + 4 installed
+Commands: 11
+Skills:   2
 
-Local Overrides:
-  .claude/agents/master-orchestrator.md (modified)
+Overrides (modified locally):
+  .claude/agents/master-orchestrator.md
 
-Project-Specific Additions:
-  .claude/agents/my-custom-agent.md
-
-Workflow Directory:
-  .workflow/patches/  — 3 patches
-  .workflow/ADRs/     — 2 decisions
-  .workflow/features/ — 1 active feature
+Workflow State:
+  Patches:  3
+  ADRs:     2
+  Active:   feature-42.md
 ```
 
-**What it checks:**
-- Current installed version
-- Latest available version from GitHub
-- GitHub repository configuration
-- Override detection (comparing to base)
-- Project-specific additions
-- Workflow artifacts count
-
-**Exit Codes:**
-- 0 — Up to date
-- 1 — Update available
-- 2 — Not initialized (run /workflow:init)
-
-Invoke `issue-executor` for context if needed.
+> "Show workflow-kit status. Read .workflow/.base-version for installed version. Check GitHub API for latest version. Read CLAUDE.md for GitHub config. List .claude/agents/*.md, .claude/commands/**/*.md, .claude/skills/. Check .claude/base/ for override detection. Count .workflow/patches/*.md, .workflow/ADRs/*.md, .workflow/features/*.md. Present formatted status dashboard."
