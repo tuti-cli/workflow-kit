@@ -201,7 +201,7 @@ download_kit() {
     log_info "Downloading workflow-kit v$version..."
 
     TEMP_DIR=$(mktemp -d)
-    local download_url="https://github.com/$GITHUB_REPO/releases/download/v$version/workflow-kit.tar.gz"
+    local download_url="https://github.com/$GITHUB_REPO/archive/refs/tags/v$version.tar.gz"
 
     if [ "$DOWNLOADER" = "curl" ]; then
         curl -sL "$download_url" | tar xz -C "$TEMP_DIR"
@@ -209,7 +209,10 @@ download_kit() {
         wget -qO- "$download_url" | tar xz -C "$TEMP_DIR"
     fi
 
-    if [ ! -d "$TEMP_DIR/kit" ]; then
+    # Find the extracted directory (GitHub archives extract to repo-version/)
+    KIT_DIR=$(find "$TEMP_DIR" -maxdepth 1 -type d -name "workflow-kit*" | head -1)
+
+    if [ -z "$KIT_DIR" ] || [ ! -d "$KIT_DIR/kit" ]; then
         log_error "Download failed or archive structure unexpected"
         rm -rf "$TEMP_DIR"
         exit 1
@@ -251,7 +254,7 @@ install_agents() {
     log_info "Installing agents..."
 
     local agent_count=0
-    for agent in "$TEMP_DIR/kit/.claude/agents/"*.md; do
+    for agent in "$KIT_DIR/kit/.claude/agents/"*.md; do
         if [ -f "$agent" ]; then
             local agent_name=$(basename "$agent")
             local dest="$PROJECT_ROOT/.claude/agents/$agent_name"
@@ -275,7 +278,7 @@ update_agents() {
     # Create backup directory for new base versions
     mkdir -p "$PROJECT_ROOT/.claude/base"
 
-    for agent in "$TEMP_DIR/kit/.claude/agents/"*.md; do
+    for agent in "$KIT_DIR/kit/.claude/agents/"*.md; do
         if [ -f "$agent" ]; then
             local agent_name=$(basename "$agent")
             local dest="$PROJECT_ROOT/.claude/agents/$agent_name"
@@ -324,7 +327,7 @@ install_commands() {
     local cmd_count=0
 
     # Workflow commands
-    for cmd in "$TEMP_DIR/kit/.claude/commands/workflow/"*.md; do
+    for cmd in "$KIT_DIR/kit/.claude/commands/workflow/"*.md; do
         if [ -f "$cmd" ]; then
             cp "$cmd" "$PROJECT_ROOT/.claude/commands/workflow/"
             ((cmd_count++))
@@ -332,7 +335,7 @@ install_commands() {
     done
 
     # Agent commands
-    for cmd in "$TEMP_DIR/kit/.claude/commands/agents/"*.md; do
+    for cmd in "$KIT_DIR/kit/.claude/commands/agents/"*.md; do
         if [ -f "$cmd" ]; then
             cp "$cmd" "$PROJECT_ROOT/.claude/commands/agents/"
             ((cmd_count++))
@@ -347,7 +350,7 @@ install_skills() {
     log_info "Installing skills..."
 
     local skill_count=0
-    for skill_dir in "$TEMP_DIR/kit/.claude/skills/"*; do
+    for skill_dir in "$KIT_DIR/kit/.claude/skills/"*; do
         if [ -d "$skill_dir" ]; then
             local skill_name=$(basename "$skill_dir")
             cp -r "$skill_dir" "$PROJECT_ROOT/.claude/skills/"
@@ -363,17 +366,17 @@ install_workflow_templates() {
     log_info "Installing workflow templates..."
 
     # Copy templates if they exist
-    if [ -d "$TEMP_DIR/kit/.workflow/templates" ]; then
-        cp -r "$TEMP_DIR/kit/.workflow/templates/"* "$PROJECT_ROOT/.workflow/templates/" 2>/dev/null || true
+    if [ -d "$KIT_DIR/kit/.workflow/templates" ]; then
+        cp -r "$KIT_DIR/kit/.workflow/templates/"* "$PROJECT_ROOT/.workflow/templates/" 2>/dev/null || true
     fi
 
     # Copy documentation
-    if [ -f "$TEMP_DIR/kit/.workflow/USAGE.md" ]; then
-        [ ! -f "$PROJECT_ROOT/.workflow/USAGE.md" ] && cp "$TEMP_DIR/kit/.workflow/USAGE.md" "$PROJECT_ROOT/.workflow/"
+    if [ -f "$KIT_DIR/kit/.workflow/USAGE.md" ]; then
+        [ ! -f "$PROJECT_ROOT/.workflow/USAGE.md" ] && cp "$KIT_DIR/kit/.workflow/USAGE.md" "$PROJECT_ROOT/.workflow/"
     fi
 
-    if [ -f "$TEMP_DIR/kit/.workflow/MASTER-REFERENCE.md" ]; then
-        [ ! -f "$PROJECT_ROOT/.workflow/MASTER-REFERENCE.md" ] && cp "$TEMP_DIR/kit/.workflow/MASTER-REFERENCE.md" "$PROJECT_ROOT/.workflow/"
+    if [ -f "$KIT_DIR/kit/.workflow/MASTER-REFERENCE.md" ]; then
+        [ ! -f "$PROJECT_ROOT/.workflow/MASTER-REFERENCE.md" ] && cp "$KIT_DIR/kit/.workflow/MASTER-REFERENCE.md" "$PROJECT_ROOT/.workflow/"
     fi
 
     log_success "Workflow templates installed"
