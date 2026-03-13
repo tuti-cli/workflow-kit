@@ -24,6 +24,7 @@ WORKFLOW_KIT_VERSION="${WORKFLOW_KIT_VERSION:-latest}"
 PROJECT_ROOT="${1:-$(pwd)}"
 CHECK_ONLY=false
 FORCE_UPDATE=false
+LOCAL_MODE=false
 GITHUB_REPO="tuti-cli/workflow-kit"
 
 while [[ $# -gt 0 ]]; do
@@ -31,6 +32,7 @@ while [[ $# -gt 0 ]]; do
         --version|-v) WORKFLOW_KIT_VERSION="$2"; shift 2 ;;
         --check|-c)   CHECK_ONLY=true; shift ;;
         --force|-f)   FORCE_UPDATE=true; shift ;;
+        --local|-l)   LOCAL_MODE=true; shift ;;
         --help|-h)
             echo "Usage: $0 [PROJECT_ROOT] [OPTIONS]"
             echo ""
@@ -38,6 +40,7 @@ while [[ $# -gt 0 ]]; do
             echo "  --version, -v   Specific version to install (default: latest)"
             echo "  --check, -c     Check for updates without applying"
             echo "  --force, -f     Discard local overrides, use base versions"
+            echo "  --local, -l     Use local kit/ folder (for development/testing)"
             exit 0
             ;;
         *) PROJECT_ROOT="$1"; shift ;;
@@ -52,13 +55,15 @@ log_error()   { echo -e "${RED}[ERROR]${NC} $1"; }
 # ─── Requirements ────────────────────────────────────────────────────────────
 check_requirements() {
     log_info "Checking requirements..."
-    if command -v curl &> /dev/null; then
-        DOWNLOADER="curl"
-    elif command -v wget &> /dev/null; then
-        DOWNLOADER="wget"
-    else
-        log_error "Either curl or wget is required"
-        exit 1
+    if [ "$LOCAL_MODE" = false ]; then
+        if command -v curl &> /dev/null; then
+            DOWNLOADER="curl"
+        elif command -v wget &> /dev/null; then
+            DOWNLOADER="wget"
+        else
+            log_error "Either curl or wget is required"
+            exit 1
+        fi
     fi
     if [ ! -d "$PROJECT_ROOT" ]; then
         log_error "Project directory does not exist: $PROJECT_ROOT"
@@ -109,7 +114,6 @@ detect_stack() {
     STACK="generic"
     QUALITY_GATE_LINT="echo 'No lint configured'"
     QUALITY_GATE_TEST="echo 'No tests configured'"
-    QUALITY_GATE_BUILD=""
 
     # Laravel / PHP (composer.json with laravel/framework)
     if [ -f "$PROJECT_ROOT/composer.json" ]; then
@@ -244,6 +248,20 @@ install_file() {
     replace_template_vars "$dest"
 }
 
+# Backup existing file with .old suffix (or .old.TIMESTAMP if .old exists)
+backup_existing_file() {
+    local dest="$1"
+    if [ -f "$dest" ]; then
+        local backup="${dest}.old"
+        # If .old already exists, add timestamp
+        if [ -f "$backup" ]; then
+            backup="${dest}.old.$(date +%Y%m%d%H%M%S)"
+        fi
+        mv "$dest" "$backup"
+        log_warning "Existing file renamed to: $(basename "$backup")"
+    fi
+}
+
 update_file() {
     local src="$1"
     local dest="$2"
@@ -252,14 +270,14 @@ update_file() {
     local content
     content=$(cat "$src")
 
-    # Apply template vars to content
+    # Apply template vars to content using bash parameter expansion
     if [ -n "$GITHUB_OWNER" ]; then
-        content=$(echo "$content" | sed "s|{{GITHUB_OWNER}}|$GITHUB_OWNER|g")
-        content=$(echo "$content" | sed "s|{{GITHUB_REPO}}|$GITHUB_REPO_NAME|g")
+        content="${content//\{\{GITHUB_OWNER\}\}/$GITHUB_OWNER}"
+        content="${content//\{\{GITHUB_REPO\}\}/$GITHUB_REPO_NAME}"
     fi
-    content=$(echo "$content" | sed "s|{{QUALITY_GATE_LINT}}|$QUALITY_GATE_LINT|g")
-    content=$(echo "$content" | sed "s|{{QUALITY_GATE_TEST}}|$QUALITY_GATE_TEST|g")
-    content=$(echo "$content" | sed "s|{{STACK}}|$STACK|g")
+    content="${content//\{\{QUALITY_GATE_LINT\}\}/$QUALITY_GATE_LINT}"
+    content="${content//\{\{QUALITY_GATE_TEST\}\}/$QUALITY_GATE_TEST}"
+    content="${content//\{\{STACK\}\}/$STACK}"
 
     if [ -f "$dest" ]; then
         if [ "$FORCE_UPDATE" = true ]; then
@@ -292,56 +310,133 @@ create_directories() {
     mkdir -p "$PROJECT_ROOT/.workflow/features"
     mkdir -p "$PROJECT_ROOT/.workflow/state"
     mkdir -p "$PROJECT_ROOT/.workflow/templates"
+    mkdir -p "$PROJECT_ROOT/.github/ISSUE_TEMPLATE"
+    mkdir -p "$PROJECT_ROOT/.github/workflows"
+
+    # Add .gitkeep to .workflow subdirectories so Git tracks them
+    touch "$PROJECT_ROOT/.workflow/patches/.gitkeep"
+    touch "$PROJECT_ROOT/.workflow/ADRs/.gitkeep"
+    touch "$PROJECT_ROOT/.workflow/features/.gitkeep"
+    touch "$PROJECT_ROOT/.workflow/state/.gitkeep"
+    touch "$PROJECT_ROOT/.workflow/templates/.gitkeep"
+
     log_success "Directory structure created"
+}
+
+# Install .github files with backup for existing files
+install_github_files() {
+    log_info "Installing .github templates..."
+    local count=0
+
+    # Ensure directories exist
+    mkdir -p "$PROJECT_ROOT/.github/ISSUE_TEMPLATE"
+    mkdir -p "$PROJECT_ROOT/.github/workflows"
+
+    # ISSUE_TEMPLATE files
+    if [ -d "$KIT_DIR/kit/.github/ISSUE_TEMPLATE" ]; then
+        for f in "$KIT_DIR/kit/.github/ISSUE_TEMPLATE/"*; do
+            [ -f "$f" ] || continue
+            local name dest
+            name=$(basename "$f")
+            dest="$PROJECT_ROOT/.github/ISSUE_TEMPLATE/$name"
+            backup_existing_file "$dest"
+            cp "$f" "$dest"
+            count=$((count + 1))
+        done
+    fi
+
+    # workflows
+    if [ -d "$KIT_DIR/kit/.github/workflows" ]; then
+        for f in "$KIT_DIR/kit/.github/workflows/"*; do
+            [ -f "$f" ] || continue
+            local name dest
+            name=$(basename "$f")
+            dest="$PROJECT_ROOT/.github/workflows/$name"
+            backup_existing_file "$dest"
+            cp "$f" "$dest"
+            count=$((count + 1))
+        done
+    fi
+
+    # PULL_REQUEST_TEMPLATE.md
+    if [ -f "$KIT_DIR/kit/.github/PULL_REQUEST_TEMPLATE.md" ]; then
+        local dest="$PROJECT_ROOT/.github/PULL_REQUEST_TEMPLATE.md"
+        backup_existing_file "$dest"
+        cp "$KIT_DIR/kit/.github/PULL_REQUEST_TEMPLATE.md" "$dest"
+        count=$((count + 1))
+    fi
+
+    log_success "Installed $count .github templates"
 }
 
 install_components() {
     log_info "Installing agents..."
     local count=0
+    local name dest
     for f in "$KIT_DIR/kit/.claude/agents/"*.md; do
-        [ -f "$f" ] && install_file "$f" "$PROJECT_ROOT/.claude/agents/$(basename "$f")" && ((count++))
+        [ -f "$f" ] || continue
+        name=$(basename "$f")
+        dest="$PROJECT_ROOT/.claude/agents/$name"
+        backup_existing_file "$dest"
+        install_file "$f" "$dest"
+        count=$((count + 1))
     done
     log_success "Installed $count agents"
 
     log_info "Installing commands..."
     count=0
     for f in "$KIT_DIR/kit/.claude/commands/workflow/"*.md; do
-        [ -f "$f" ] && install_file "$f" "$PROJECT_ROOT/.claude/commands/workflow/$(basename "$f")" && ((count++))
+        [ -f "$f" ] || continue
+        name=$(basename "$f")
+        dest="$PROJECT_ROOT/.claude/commands/workflow/$name"
+        backup_existing_file "$dest"
+        install_file "$f" "$dest"
+        count=$((count + 1))
     done
     for f in "$KIT_DIR/kit/.claude/commands/agents/"*.md; do
-        [ -f "$f" ] && install_file "$f" "$PROJECT_ROOT/.claude/commands/agents/$(basename "$f")" && ((count++))
+        [ -f "$f" ] || continue
+        name=$(basename "$f")
+        dest="$PROJECT_ROOT/.claude/commands/agents/$name"
+        backup_existing_file "$dest"
+        install_file "$f" "$dest"
+        count=$((count + 1))
     done
     log_success "Installed $count commands"
 
     log_info "Installing skills..."
     count=0
     for skill_dir in "$KIT_DIR/kit/.claude/skills/"*/; do
-        if [ -d "$skill_dir" ]; then
-            local skill_name
-            skill_name=$(basename "$skill_dir")
-            mkdir -p "$PROJECT_ROOT/.claude/skills/$skill_name"
-            for f in "$skill_dir"*.md; do
-                [ -f "$f" ] && install_file "$f" "$PROJECT_ROOT/.claude/skills/$skill_name/$(basename "$f")" && ((count++))
-            done
-        fi
+        [ -d "$skill_dir" ] || continue
+        local skill_name
+        skill_name=$(basename "$skill_dir")
+        mkdir -p "$PROJECT_ROOT/.claude/skills/$skill_name"
+        for f in "$skill_dir"*.md; do
+            [ -f "$f" ] || continue
+            name=$(basename "$f")
+            dest="$PROJECT_ROOT/.claude/skills/$skill_name/$name"
+            backup_existing_file "$dest"
+            install_file "$f" "$dest"
+            count=$((count + 1))
+        done
     done
     log_success "Installed $count skills"
 
-    log_info "Installing .github templates..."
-    if [ -d "$KIT_DIR/kit/.github" ]; then
-        cp -r "$KIT_DIR/kit/.github" "$PROJECT_ROOT/"
-        log_success ".github templates installed"
-    fi
+    # Install .github files with backup handling
+    install_github_files
 
     if [ -f "$KIT_DIR/kit/scripts/setup-labels.sh" ]; then
         mkdir -p "$PROJECT_ROOT/scripts"
-        install_file "$KIT_DIR/kit/scripts/setup-labels.sh" "$PROJECT_ROOT/scripts/setup-labels.sh"
-        chmod +x "$PROJECT_ROOT/scripts/setup-labels.sh"
+        dest="$PROJECT_ROOT/scripts/setup-labels.sh"
+        backup_existing_file "$dest"
+        install_file "$KIT_DIR/kit/scripts/setup-labels.sh" "$dest"
+        chmod +x "$dest"
         log_success "setup-labels.sh installed"
     fi
 
     if [ -f "$KIT_DIR/kit/WORKFLOW.md" ]; then
-        [ ! -f "$PROJECT_ROOT/WORKFLOW.md" ] && install_file "$KIT_DIR/kit/WORKFLOW.md" "$PROJECT_ROOT/WORKFLOW.md"
+        if [ ! -f "$PROJECT_ROOT/WORKFLOW.md" ]; then
+            install_file "$KIT_DIR/kit/WORKFLOW.md" "$PROJECT_ROOT/WORKFLOW.md"
+        fi
     fi
 }
 
@@ -358,9 +453,9 @@ update_components() {
             base_dest="$PROJECT_ROOT/.claude/base/$section/$name"
             result=$(update_file "$f" "$dest" "$base_dest")
             case "$result" in
-                updated|new) ((updated++)) ;;
+                updated|new) updated=$((updated + 1)) ;;
                 preserved)
-                    ((preserved++))
+                    preserved=$((preserved + 1))
                     log_warning "Override preserved: .claude/$section/$name"
                     ;;
             esac
@@ -380,17 +475,23 @@ update_components() {
             base_dest="$PROJECT_ROOT/.claude/base/skills/$skill_name/$name"
             result=$(update_file "$f" "$dest" "$base_dest")
             case "$result" in
-                updated|new) ((updated++)) ;;
+                updated|new) updated=$((updated + 1)) ;;
                 preserved)
-                    ((preserved++))
+                    preserved=$((preserved + 1))
                     log_warning "Override preserved: .claude/skills/$skill_name/$name"
                     ;;
             esac
         done
     done
 
+    # Update .github files with backup handling
+    log_info "Updating .github templates..."
+    if [ -d "$KIT_DIR/kit/.github" ]; then
+        install_github_files
+    fi
+
     log_success "Updated $updated files"
-    [ $preserved -gt 0 ] && log_warning "Preserved $preserved overrides (new base saved to .claude/base/)"
+    [ "$preserved" -gt 0 ] && log_warning "Preserved $preserved overrides (new base saved to .claude/base/)"
 }
 
 # ─── Version files ────────────────────────────────────────────────────────────
@@ -475,17 +576,25 @@ main() {
     read_github_config
     detect_stack
 
-    if [ "$WORKFLOW_KIT_VERSION" = "latest" ]; then
-        get_latest_version
-        WORKFLOW_KIT_VERSION="$LATEST_VERSION"
-    fi
+    # Handle local mode
+    if [ "$LOCAL_MODE" = true ]; then
+        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        KIT_DIR="$SCRIPT_DIR"
+        WORKFLOW_KIT_VERSION="local"
+        log_info "Using local kit from: $KIT_DIR"
+    else
+        if [ "$WORKFLOW_KIT_VERSION" = "latest" ]; then
+            get_latest_version
+            WORKFLOW_KIT_VERSION="$LATEST_VERSION"
+        fi
 
-    if [ "$IS_UPDATE" = true ]; then
-        compare_versions
-        check_updates_only
-    fi
+        if [ "$IS_UPDATE" = true ]; then
+            compare_versions
+            check_updates_only
+        fi
 
-    download_kit "$WORKFLOW_KIT_VERSION"
+        download_kit "$WORKFLOW_KIT_VERSION"
+    fi
 
     if [ "$IS_UPDATE" = true ]; then
         update_components
