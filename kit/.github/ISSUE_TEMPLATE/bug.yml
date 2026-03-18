@@ -1,19 +1,19 @@
-name: 🐛 Bug Report
+name: "Bug Report"
 description: Something is broken
-labels: ["type: bug", "status: ready"]
+labels: ["workflow:bugfix", "type:bug", "status:ready"]
 body:
   - type: input
     id: summary
     attributes:
-      label: What's broken?
-      placeholder: Short, clear description
+      label: Summary
+      placeholder: What's broken?
     validations:
       required: true
 
   - type: textarea
     id: reproduction
     attributes:
-      label: Steps to reproduce
+      label: Steps to Reproduce
       placeholder: |
         1. Go to...
         2. Do...
@@ -24,18 +24,16 @@ body:
   - type: textarea
     id: expected
     attributes:
-      label: Expected vs actual
+      label: Expected vs Actual
       placeholder: |
         Expected: ...
         Actual: ...
-    validations:
-      required: true
 
   - type: textarea
     id: context
     attributes:
-      label: Context / logs / screenshots
-      placeholder: Browser, OS, env, error logs, stack traces
+      label: Context
+      placeholder: Browser, OS, error logs, stack traces
 
   - type: dropdown
     id: priority

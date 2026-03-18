@@ -1,35 +1,27 @@
-name: ✨ Feature Request
+name: "Feature Request"
 description: New feature or improvement
-labels: ["type: feature", "status: ready"]
+labels: ["workflow:feature", "type:feature", "status:ready"]
 body:
   - type: input
     id: summary
     attributes:
-      label: What do you want to build?
-      placeholder: One-line summary
+      label: Summary
+      placeholder: One-line description
     validations:
       required: true
 
   - type: textarea
     id: context
     attributes:
-      label: Problem it solves
+      label: Context
       placeholder: What user pain or business need does this address?
-    validations:
-      required: true
-
-  - type: textarea
-    id: solution
-    attributes:
-      label: Proposed solution
-      placeholder: How should it work? Include flows, edge cases.
     validations:
       required: true
 
   - type: textarea
     id: acceptance
     attributes:
-      label: Acceptance criteria
+      label: Acceptance Criteria
       placeholder: |
         - [ ] User can...
         - [ ] System should...
@@ -39,8 +31,8 @@ body:
   - type: textarea
     id: notes
     attributes:
-      label: Technical notes
-      placeholder: Stack details, constraints, related issues, affected files
+      label: Technical Notes
+      placeholder: Stack details, constraints, related issues
 
   - type: dropdown
     id: priority

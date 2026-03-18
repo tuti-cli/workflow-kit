@@ -1,30 +1,29 @@
-name: 🔧 Chore / Task
-description: Refactor, tooling, dependency update, config, non-feature work
-labels: ["type: chore", "status: ready"]
+name: "Chore"
+description: Refactor, tooling, dependencies, config
+labels: ["workflow:refactor", "type:chore", "status:ready"]
 body:
   - type: input
     id: summary
     attributes:
-      label: What needs to be done?
-      placeholder: Short description
+      label: Summary
+      placeholder: What needs to be done?
     validations:
       required: true
 
   - type: textarea
-    id: why
+    id: context
     attributes:
-      label: Why is this needed?
-      placeholder: Technical debt, upgrade required, CI fix, cleanup...
+      label: Context
+      placeholder: Why is this needed?
     validations:
       required: true
 
   - type: textarea
-    id: tasks
+    id: acceptance
     attributes:
-      label: Tasks
+      label: Acceptance Criteria
       placeholder: |
-        - [ ] Step 1
-        - [ ] Step 2
+        - [ ] Done when...
 
   - type: dropdown
     id: priority
@@ -34,6 +33,7 @@ body:
         - "priority: low"
         - "priority: medium"
         - "priority: high"
-      default: 0
+        - "priority: critical"
+      default: 1
     validations:
       required: true

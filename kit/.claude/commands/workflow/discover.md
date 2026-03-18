@@ -1,10 +1,10 @@
-# workflow:discover
+# ww:discover
 
 > Analyze project to detect stack, set up workflow config, recommend agents.
 
 **Usage:**
-- `/workflow:discover` — Analyze current directory
-- `/workflow:discover <file>` — Analyze a discovery document
+- `/ww:discover` — Analyze current directory
+- `/ww:discover <file>` — Analyze a discovery document
 
 **What it does:**
 1. Detects technology stack (languages, frameworks, databases)

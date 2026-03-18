@@ -1,9 +1,9 @@
-# workflow:status
+# ww:status
 
 > Show workflow-kit version, configuration, and project state.
 
 **Usage:**
-- `/workflow:status` — Full status dashboard
+- `/ww:status` — Full status dashboard
 
 **Output:**
 ```

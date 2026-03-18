@@ -1,11 +1,11 @@
-# workflow:commit
+# ww:commit
 
 > Create a conventional commit with quality gate enforcement.
 
 **Usage:**
-- `/workflow:commit` — Interactive commit with diff review
-- `/workflow:commit "message"` — Commit with specified message
-- `/workflow:commit --pr` — Commit and create PR
+- `/ww:commit` — Interactive commit with diff review
+- `/ww:commit "message"` — Commit with specified message
+- `/ww:commit --pr` — Commit and create PR
 
 **Commit Format:**
 ```

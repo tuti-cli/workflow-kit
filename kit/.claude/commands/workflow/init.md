@@ -1,10 +1,10 @@
-# workflow:init
+# ww:init
 
 > Initialize workflow-kit in a new or existing project.
 
 **Usage:**
-- `/workflow:init` — Interactive initialization
-- `/workflow:init --owner=org --repo=name` — With explicit GitHub config
+- `/ww:init` — Interactive initialization
+- `/ww:init --owner=org --repo=name` — With explicit GitHub config
 
 **What it does:**
 1. Creates `.claude/` structure (agents/, commands/, skills/)
@@ -22,7 +22,7 @@
 ./scripts/setup-labels.sh
 
 # Analyze project and get agent recommendations
-/workflow:discover
+/ww:discover
 
 # Install recommended agents
 /agents:install <name>
@@ -33,4 +33,4 @@
 - `gh` CLI authenticated (for label setup)
 - curl or wget
 
-> "Run the workflow-kit installer script. If not already downloaded, fetch from https://raw.githubusercontent.com/tuti-cli/workflow-kit/main/install.sh. Execute with project root as target. After install, run /workflow:discover to analyze the project."
+> "Run the workflow-kit installer script. If not already downloaded, fetch from https://raw.githubusercontent.com/tuti-cli/workflow-kit/main/install.sh. Execute with project root as target. After install, run /ww:discover to analyze the project."

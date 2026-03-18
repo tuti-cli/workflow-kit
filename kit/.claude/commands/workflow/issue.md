@@ -1,12 +1,12 @@
-# workflow:issue
+# ww:issue
 
 > Execute a GitHub issue through the complete workflow pipeline.
 
 **Usage:**
-- `/workflow:issue <N>` — Full pipeline
-- `/workflow:issue <N> --dry-run` — Show plan without executing
-- `/workflow:issue <N> --worktree` — Full pipeline in isolated worktree
-- `/workflow:issue <N> --quick` — Skip review stage, minimal checks
+- `/ww:issue <N>` — Full pipeline
+- `/ww:issue <N> --dry-run` — Show plan without executing
+- `/ww:issue <N> --worktree` — Full pipeline in isolated worktree
+- `/ww:issue <N> --quick` — Skip review stage, minimal checks
 
 **Pipeline Stages:**
 1. SETUP — Create branch, label in-progress

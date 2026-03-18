@@ -6,14 +6,14 @@
 
 | Command | What it does |
 |---------|-------------|
-| `/workflow:issue <N>` | Implement issue end-to-end (plan → code → PR) |
-| `/workflow:issue <N> --dry-run` | Show plan only, no execution |
-| `/workflow:issue <N> --worktree` | Implement in isolated worktree |
-| `/workflow:commit` | Create conventional commit with quality gates |
-| `/workflow:create-issue` | Create GitHub issue from current context |
-| `/workflow:discover` | Analyze project, recommend agents |
-| `/workflow:status` | Show version, config, state |
-| `/workflow:update` | Pull latest workflow-kit updates |
+| `/ww:issue <N>` | Implement issue end-to-end (plan → code → PR) |
+| `/ww:issue <N> --dry-run` | Show plan only, no execution |
+| `/ww:issue <N> --worktree` | Implement in isolated worktree |
+| `/ww:commit` | Create conventional commit with quality gates |
+| `/ww:create-issue` | Create GitHub issue from current context |
+| `/ww:discover` | Analyze project, recommend agents |
+| `/ww:status` | Show version, config, state |
+| `/ww:update` | Pull latest workflow-kit updates |
 | `/agents:install <n>` | Install agent from VoltAgent catalog |
 | `/agents:search <query>` | Search available agents |
 | `/agents:list` | List installed agents |
@@ -24,7 +24,7 @@
 External issue → status: needs-confirmation → /triage → status: confirmed → status: ready
 New feature/bug → create with template → status: ready
                                               ↓
-                                    /workflow:issue <N>
+                                    /ww:issue <N>
                                               ↓
                                     Plan mode (approval required)
                                               ↓
@@ -107,10 +107,10 @@ Types: `feat` `fix` `docs` `style` `refactor` `test` `chore`
 ## Improving the Workflow
 
 ```
-/workflow:issue N   ← where N is a chore issue describing the improvement
+/ww:issue N   ← where N is a chore issue describing the improvement
 ```
 
-Or use `/workflow:create-issue` to create the improvement issue first.
+Or use `/ww:create-issue` to create the improvement issue first.
 
 ## Directory Structure
 
@@ -118,7 +118,7 @@ Or use `/workflow:create-issue` to create the improvement issue first.
 .claude/
 ├── agents/           # Core + installed specialist agents
 ├── commands/         # Slash commands
-│   ├── workflow/     # /workflow:* commands
+│   ├── workflow/     # /ww:* commands
 │   └── agents/       # /agents:* commands
 └── skills/
     ├── workflow-rules/   # Global rules (quality gates, labels, conventions)
@@ -145,7 +145,7 @@ chmod +x scripts/setup-labels.sh
 
 # 3. Analyze project, get agent recommendations
 # In Claude Code:
-/workflow:discover
+/ww:discover
 
 # 4. Install recommended specialist agents
 /agents:install php-pro
@@ -159,4 +159,4 @@ chmod +x scripts/setup-labels.sh
 curl -sL https://raw.githubusercontent.com/tuti-cli/workflow-kit/main/install.sh | bash
 ```
 
-Or in Claude Code: `/workflow:update`
+Or in Claude Code: `/ww:update`

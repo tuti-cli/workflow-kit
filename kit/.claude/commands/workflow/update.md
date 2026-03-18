@@ -1,11 +1,11 @@
-# workflow:update
+# ww:update
 
 > Pull latest updates from workflow-kit repository.
 
 **Usage:**
-- `/workflow:update` — Check and apply updates
-- `/workflow:update --check` — Check only, don't apply
-- `/workflow:update --force` — Overwrite local overrides
+- `/ww:update` — Check and apply updates
+- `/ww:update --check` — Check only, don't apply
+- `/ww:update --force` — Overwrite local overrides
 
 **Override Detection:**
 Files different from previous base version are preserved unless `--force`.

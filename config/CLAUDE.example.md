@@ -1,77 +1,88 @@
 # CLAUDE.md Example
 
-This is the required structure for your project's `CLAUDE.md` for workflow-kit to work correctly.
+This is the required structure for your project's `CLAUDE.md` for workflow-kit v2 to work correctly.
 
 ## Required Section
 
 ```markdown
-### GitHub Repository
+## Kit Configuration
 
-- **Owner:** your-org
-- **Repo:** your-repo
-- **Full:** your-org/your-repo
-- **gh CLI:** Always use `--repo your-org/your-repo`
-- **GitHub MCP:** Always use `owner="your-org" repo="your-repo"`
+workflow_mode: scratch        # scratch | issues | legacy
+stack: laravel                # laravel | vue | react | wordpress | next | nuxt
+
+repo_owner: your-org         # your GitHub org or username
+repo_name: your-repo          # your repository name
+
+quality:
+  test_runner: pest           # pest | phpunit | vitest | jest | playwright
+  lint_command: composer lint # update after /ww:init
+  test_command: composer test # update after /ww:init
+  coverage_min: 80            # overall minimum %
+  coverage_new: 90            # new code minimum %
 ```
 
-The installer reads `Owner` and `Repo` to replace `{{GITHUB_OWNER}}` and `{{GITHUB_REPO}}` in all agents, commands, and skills.
+The installer reads `repo_owner` and `repo_name` to configure the workflow.
 
 ## Stack Detection (automatic)
 
-The installer auto-detects your stack and sets quality gate commands. If detection is wrong, add this section to override:
+The installer auto-detects your stack and sets quality commands:
 
-```markdown
-### Quality Gates
-
-- **Lint:** composer lint
-- **Test:** composer test
-```
-
-Supported auto-detection:
-- **Laravel / Laravel Zero** → `composer lint` + `composer test`
-- **WordPress** → `composer lint` + `composer test`
-- **React** → `npm run lint` + `npm test`
-- **Vue** → `npm run lint` + `npm test`
-- **Node** → `npm run lint` + `npm test`
-- **Python** → `ruff check .` + `pytest`
-- **Generic** → prompts you to configure manually
+| Stack | Lint | Test |
+|-------|------|------|
+| Laravel | `composer lint` | `composer test` |
+| WordPress | `composer lint` | `composer test` |
+| React/Vue | `npm run lint` | `npm test` |
+| Node | `npm run lint` | `npm test` |
+| Python | `ruff check .` | `pytest` |
 
 ## Full Example
 
 ```markdown
 # My Project
 
-## Overview
-Brief description of your project.
+> Brief description of what this project does.
 
-## Tech Stack
-- **Language:** PHP 8.4
-- **Framework:** Laravel Zero 12.x
-- **Testing:** Pest
-- **Linting:** Laravel Pint
+---
 
-### GitHub Repository
+## Kit Configuration
 
-- **Owner:** myorg
-- **Repo:** myproject
-- **Full:** myorg/myproject
-- **gh CLI:** Always use `--repo myorg/myproject`
-- **GitHub MCP:** Always use `owner="myorg" repo="myproject"`
+workflow_mode: issues
+stack: laravel
+stack_extras: [inertia, filament]
 
-## Development Commands
+repo_owner: myorg
+repo_name: myproject
 
-```bash
-composer test       # All checks: rector + pint + phpstan + pest
-composer lint       # Fix formatting (Pint)
-composer refactor   # Fix code (Rector)
+quality:
+  test_runner: pest
+  lint_command: composer lint
+  test_command: composer test
+  coverage_min: 80
+  coverage_new: 90
+
+agents:
+  protected:
+    - master-orchestrator
+    - issue-executor
+    # ... (other protected agents)
+
+---
+
+## Project Context
+
+- **Type:** existing
+- **Stack:** Laravel 11 + Inertia + Filament
+- **Description:** Internal admin dashboard
+
+## Notes
+
+<!-- Project-specific notes -->
 ```
 
-## Code Conventions
-- strict_types=1 in every file
-- Final classes preferred
-- Constructor injection only
-- PSR-12 formatting
+## Workflow Modes
 
-## Project-Specific Notes
-<!-- Add env setup, key directories, deployment info, gotchas here -->
-```
+| Mode | User Goal | Pipeline |
+|------|-----------|----------|
+| `scratch` | Build something new | Plan → Build → Commit (no branches) |
+| `issues` | Improve existing | Full: SETUP → IMPLEMENT → REVIEW → COMMIT → PR → CLOSE |
+| `legacy` | Stabilize / fix | Audit → Migration phases |

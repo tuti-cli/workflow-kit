@@ -93,7 +93,7 @@ Types: `feat` `fix` `docs` `style` `refactor` `test` `chore`
 
 ```
 status: ready
-    ↓ /workflow:issue N
+    ↓ /ww:do N
 status: in-progress
     ↓ PR opened
 status: review

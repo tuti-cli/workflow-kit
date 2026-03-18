@@ -26,7 +26,7 @@ workflow-kit/
 │   │   │   ├── agent-installer.md
 │   │   │   └── workflow-orchestrator.md
 │   │   ├── commands/
-│   │   │   ├── workflow/           # /workflow:* commands (7 files)
+│   │   │   ├── workflow/           # /ww:* commands (7 files)
 │   │   │   │   ├── init.md
 │   │   │   │   ├── issue.md
 │   │   │   │   ├── commit.md
@@ -100,7 +100,7 @@ workflow-kit/
 ```
 User Command                    Agent Coordination
 ─────────────                   ──────────────────
-/workflow:issue N  ────────────▶ issue-executor ───────▶ master-orchestrator
+/ww:issue N  ────────────▶ issue-executor ───────▶ master-orchestrator
                          │              │                        │
                          │              ▼                        ▼
                          │        - Fetch issue           - Form squad
@@ -109,7 +109,7 @@ User Command                    Agent Coordination
                          │        - Hand off              - Interactive commits
                          │
                          ▼
-/workflow:commit   ────────────▶ master-orchestrator (direct)
+/ww:commit   ────────────▶ master-orchestrator (direct)
                          │
                          ▼
 /agents:install    ────────────▶ agent-installer
@@ -148,13 +148,13 @@ All files in `kit/.claude/` use placeholders that get replaced during installati
 
 | Command | File | Description |
 |---------|------|-------------|
-| `/workflow:init` | `commands/workflow/init.md` | Initialize workflow-kit in a project |
-| `/workflow:issue <N>` | `commands/workflow/issue.md` | Execute issue through full pipeline |
-| `/workflow:commit` | `commands/workflow/commit.md` | Create conventional commit with quality gates |
-| `/workflow:create-issue` | `commands/workflow/create-issue.md` | Create issue from current context |
-| `/workflow:status` | `commands/workflow/status.md` | Show version, config, and state |
-| `/workflow:update` | `commands/workflow/update.md` | Pull latest workflow-kit updates |
-| `/workflow:discover` | `commands/workflow/discover.md` | Analyze project, recommend agents |
+| `/ww:init` | `commands/workflow/init.md` | Initialize workflow-kit in a project |
+| `/ww:issue <N>` | `commands/workflow/issue.md` | Execute issue through full pipeline |
+| `/ww:commit` | `commands/workflow/commit.md` | Create conventional commit with quality gates |
+| `/ww:create-issue` | `commands/workflow/create-issue.md` | Create issue from current context |
+| `/ww:status` | `commands/workflow/status.md` | Show version, config, and state |
+| `/ww:update` | `commands/workflow/update.md` | Pull latest workflow-kit updates |
+| `/ww:discover` | `commands/workflow/discover.md` | Analyze project, recommend agents |
 
 #### Agent Commands
 
