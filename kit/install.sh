@@ -4,7 +4,7 @@
 # Installs or updates the workflow system in any project
 #
 # Usage:
-#   curl -sL https://raw.githubusercontent.com/tuti-cli/workflow-kit/main/install.sh | bash
+#   curl -sL https://raw.githubusercontent.com/tuti-cli/workflow-kit/refactor/kit-new-impruve-workflow-v3/install.sh | bash
 #   ./install.sh                    # Install/Update in current directory
 #   ./install.sh /path/to/project   # Install/Update in specific project
 #   ./install.sh --version 1.0.0    # Install specific version
@@ -216,7 +216,7 @@ check_updates_only() {
     if [ "$CHECK_ONLY" = true ]; then
         echo ""
         echo "Run the installer again to apply:"
-        echo "  curl -sL https://raw.githubusercontent.com/tuti-cli/workflow-kit/main/install.sh | bash"
+        echo "  curl -sL https://raw.githubusercontent.com/tuti-cli/workflow-kit/refactor/kit-new-impruve-workflow-v3/install.sh | bash"
         exit 0
     fi
 }
@@ -633,7 +633,7 @@ print_install_summary() {
     echo ""
     echo "v2 Commands: /ww:init, /ww:discover, /ww:plan, /ww:do, /ww:audit, /ww:arch, /ww:commit"
     echo ""
-    echo "Update with: curl -sL https://raw.githubusercontent.com/tuti-cli/workflow-kit/main/install.sh | bash"
+    echo "Update with: curl -sL https://raw.githubusercontent.com/tuti-cli/workflow-kit/refactor/kit-new-impruve-workflow-v3/install.sh | bash"
 }
 
 print_update_summary() {
