@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Workflow Kit Docs
+    url: https://github.com/tuti-cli/workflow-kit#readme
+    about: Read the workflow-kit documentation

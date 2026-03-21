@@ -68,15 +68,3 @@ Produce a **decisions summary**:
 - [Branch]: [What was decided and why]
 ...
 ```
-
-Then suggest next steps contextually based on what was grilled:
-
-| If grilled about... | Suggest |
-|---------------------|---------|
-| Architecture / system design | `/ww:arch` — record it as an ADR |
-| A feature or implementation plan | `/ww:do` — start implementing |
-| A plan that needs breakdown | `/ww:create-issue` — turn it into issues |
-| Something that needs more design | `/ww:plan` — formalize the plan first |
-| Already built, needs committing | `/ww:commit` — quality gates + commit |
-
-Only suggest commands that are relevant to what was actually discussed.
